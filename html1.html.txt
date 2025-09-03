@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Filler Pro - כלי מילוי PDF מתקדם</title>
+
+```
+<!-- External Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=David+Libre:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        direction: rtl;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+        background: white;
+        padding: 20px;
+        box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        z-index: 1000;
+        position: relative;
+    }
+
+    .header h1 {
+        color: #2d3436;
+        font-size: 28px;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .file-controls {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .file-input-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .file-input-label {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 16px;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 180px;
+        justify-content: center;
+    }
+
+    .file-input-label:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .file-input {
+        display: none;
+    }
+
+    .file-status {
+        font-size: 14px;
+        color: #636e72;
+        min-height: 20px;
+    }
+
+    .file-status.success {
+        color: #00b894;
+        font-weight: 500;
+    }
+
+    .file-status.error {
+        color: #e17055;
+        font-weight: 500;
+    }
+
+    .export-btn {
+        background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 16px;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 180px;
+        justify-content: center;
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    .export-btn.enabled {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .export-btn.enabled:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    /* Main Content */
+    .main-content {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+        background: #f8f9fa;
+    }
+
+    /* PDF Viewer */
+    .pdf-viewer {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        overflow: auto;
+    }
+
+    .pdf-container {
+        position: relative;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        display: none;
+    }
+
+    .pdf-canvas {
+        display: block;
+        border-radius: 10px;
+        max-width: 100%;
+        height: auto;
+    }
+
+    .fields-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+    }
+
+    /* Field Overlays */
+    .field-overlay {
+        position: absolute;
+        border: 2px solid transparent;
+        background: rgba(102, 126, 234, 0.1);
+        cursor: pointer;
+        transition: all 0.3s;
+        pointer-events: auto;
+        border-radius: 4px;
+    }
+
+    .field-overlay:hover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.2);
+        transform: scale(1.02);
+    }
+
+    .field-overlay.filled {
+        border-color: #00b894;
+        background: rgba(0, 184, 148, 0.1);
+    }
+
+    .field-overlay.active {
+        border-color: #e17055;
+        background: rgba(225, 112, 85, 0.2);
+        z-index: 100;
+    }
+
+    .field-text {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        padding: 4px;
+        font-family: 'David Libre', 'Heebo', sans-serif;
+        font-size: 14px;
+        color: #2d3436;
+        pointer-events: none;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .field-text.rtl {
+        direction: rtl;
+        justify-content: flex-end;
+        text-align: right;
+    }
+
+    .field-text.ltr {
+        direction: ltr;
+        justify-content: flex-start;
+        text-align: left;
+    }
+
+    /* Sidebar */
+    .sidebar {
+        width: 350px;
+        background: white;
+        border-left: 1px solid #e9ecef;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .sidebar-header {
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .sidebar-header h2 {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .sidebar-info {
+        font-size: 14px;
+        opacity: 0.9;
+    }
+
+    .fields-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+    }
+
+    .field-item {
+        background: #f8f9fa;
+        border: 2px solid transparent;
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 16px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .field-item:hover {
+        border-color: #667eea;
+        transform: translateX(-4px);
+    }
+
+    .field-item.filled {
+        border-color: #00b894;
+        background: rgba(0, 184, 148, 0.05);
+    }
+
+    .field-item.active {
+        border-color: #e17055;
+        background: rgba(225, 112, 85, 0.1);
+    }
+
+    .field-label {
+        font-weight: 600;
+        color: #2d3436;
+        margin-bottom: 8px;
+        font-size: 16px;
+    }
+
+    .field-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+        color: #636e72;
+        margin-bottom: 12px;
+    }
+
+    .field-input {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #e9ecef;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: 'David Libre', 'Heebo', sans-serif;
+        transition: all 0.3s;
+    }
+
+    .field-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .field-input.error {
+        border-color: #e17055;
+    }
+
+    .error-message {
+        color: #e17055;
+        font-size: 12px;
+        margin-top: 4px;
+        display: none;
+    }
+
+    .error-message.show {
+        display: block;
+    }
+
+    .checkbox-input {
+        transform: scale(1.5);
+        margin: 8px;
+    }
+
+    /* Loading */
+    .loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: #636e72;
+    }
+
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #e9ecef;
+        border-top-color: #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Welcome Message */
+    .welcome-message {
+        text-align: center;
+        color: #636e72;
+        padding: 60px 20px;
+    }
+
+    .welcome-icon {
+        font-size: 72px;
+        margin-bottom: 20px;
+        opacity: 0.6;
+    }
+
+    .welcome-text {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #2d3436;
+    }
+
+    .welcome-subtext {
+        font-size: 14px;
+        opacity: 0.8;
+    }
+
+    /* Toast Notifications */
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+    }
+
+    .toast {
+        background: white;
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 10px;
+        box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 300px;
+        transform: translateX(400px);
+        transition: transform 0.3s;
+    }
+
+    .toast.show {
+        transform: translateX(0);
+    }
+
+    .toast.success {
+        border-left: 4px solid #00b894;
+    }
+
+    .toast.error {
+        border-left: 4px solid #e17055;
+    }
+
+    .toast-icon {
+        font-size: 20px;
+    }
+
+    .toast-message {
+        flex: 1;
+        font-weight: 500;
+    }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+        body {
+            font-size: 14px;
+        }
+
+        .header {
+            padding: 15px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+        }
+
+        .file-controls {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .file-input-label,
+        .export-btn {
+            min-width: 250px;
+        }
+
+        .main-content {
+            flex-direction: column;
+        }
+
+        .pdf-viewer {
+            padding: 10px;
+        }
+
+        .sidebar {
+            width: 100%;
+            max-height: 40vh;
+            order: -1;
+        }
+
+        .fields-list {
+            padding: 15px;
+        }
+
+        .field-overlay {
+            min-width: 44px;
+            min-height: 44px;
+        }
+
+        .toast {
+            min-width: calc(100vw - 40px);
+            margin: 0 20px 10px;
+        }
+    }
+
+    /* Small Mobile */
+    @media (max-width: 480px) {
+        .file-input-label,
+        .export-btn {
+            min-width: calc(100vw - 60px);
+            font-size: 14px;
+            padding: 10px 20px;
+        }
+
+        .sidebar {
+            max-height: 50vh;
+        }
+
+        .field-input {
+            font-size: 16px; /* Prevent zoom on iOS */
+        }
+    }
+</style>
+```
+
+</head>
+<body>
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+```
+<!-- Header -->
+<div class="header">
+    <h1>📋 PDF Filler Pro</h1>
+    <div class="file-controls">
+        <div class="file-input-group">
+            <label for="pdf-input" class="file-input-label">
+                📄 העלה PDF
+            </label>
+            <input type="file" id="pdf-input" class="file-input" accept=".pdf">
+            <div id="pdf-status" class="file-status">נא להעלות קובץ PDF</div>
+        </div>
+
+        <div class="file-input-group">
+            <label for="json-input" class="file-input-label">
+                🗂️ העלה JSON
+            </label>
+            <input type="file" id="json-input" class="file-input" accept=".json">
+            <div id="json-status" class="file-status">נא להעלות קובץ מיפוי</div>
+        </div>
+
+        <button id="export-btn" class="export-btn">
+            💾 צור PDF ממולא
+        </button>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+    <!-- PDF Viewer -->
+    <div class="pdf-viewer">
+        <div id="welcome-message" class="welcome-message">
+            <div class="welcome-icon">📄</div>
+            <div class="welcome-text">כלי מילוי PDF מתקדם</div>
+            <div class="welcome-subtext">העלה קובץ PDF וקובץ מיפוי JSON כדי להתחיל</div>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <div>טוען קובץ PDF...</div>
+        </div>
+
+        <div id="pdf-container" class="pdf-container">
+            <canvas id="pdf-canvas" class="pdf-canvas"></canvas>
+            <div id="fields-overlay" class="fields-overlay"></div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>שדות למילוי</h2>
+            <div class="sidebar-info">
+                <span id="filled-count">0</span> מתוך <span id="total-count">0</span> שדות ממולאים
+            </div>
+        </div>
+        <div id="fields-list" class="fields-list">
+            <div class="welcome-message">
+                <div class="welcome-icon">✏️</div>
+                <div class="welcome-text">השדות יופיעו כאן</div>
+                <div class="welcome-subtext">לאחר טעינת קבצי PDF ו-JSON</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Set PDF.js worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    class PDFFillerTool {
+        constructor() {
+            this.pdfDocument = null;
+            this.pdfArrayBuffer = null;
+            this.originalPDFFile = null; // Store original file to avoid ArrayBuffer detachment
+            this.fieldsData = null;
+            this.fieldValues = {};
+            this.activeField = null;
+            this.scale = 2; // 300 DPI equivalent
+            
+            this.initializeEventListeners();
+            this.loadSavedData();
+        }
+
+        initializeEventListeners() {
+            // File inputs
+            document.getElementById('pdf-input').addEventListener('change', (e) => {
+                this.handlePDFUpload(e.target.files[0]);
+            });
+
+            document.getElementById('json-input').addEventListener('change', (e) => {
+                this.handleJSONUpload(e.target.files[0]);
+            });
+
+            // Export button
+            document.getElementById('export-btn').addEventListener('click', () => {
+                this.exportFilledPDF();
+            });
+
+            // Save data on value changes
+            window.addEventListener('beforeunload', () => {
+                this.saveData();
+            });
+        }
+
+        async handlePDFUpload(file) {
+            if (!file) return;
+
+            try {
+                this.showLoading(true);
+                this.updateStatus('pdf-status', 'טוען PDF...', 'loading');
+
+                // Store the original file
+                this.originalPDFFile = file;
+                
+                // Create ArrayBuffer and store it
+                const arrayBuffer = await file.arrayBuffer();
+                this.pdfArrayBuffer = arrayBuffer;
+                
+                // Create a safe copy for PDF.js
+                const uint8Array = new Uint8Array(arrayBuffer);
+                
+                this.pdfDocument = await pdfjsLib.getDocument({ data: uint8Array }).promise;
+
+                await this.renderPDF();
+                this.updateStatus('pdf-status', 'PDF נטען בהצלחה', 'success');
+                this.showToast('קובץ PDF נטען בהצלחה', 'success');
+                this.checkReadyState();
+
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                this.updateStatus('pdf-status', 'שגיאה בטעינת PDF', 'error');
+                this.showToast('שגיאה בטעינת קובץ PDF', 'error');
+            } finally {
+                this.showLoading(false);
+            }
+        }
+
+        async handleJSONUpload(file) {
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                console.log("Raw JSON text:", text);
+                
+                const data = JSON.parse(text);
+                console.log("Parsed JSON:", data);
+                console.log("Fields:", data.fields);
+                
+                if (!data.fields || !Array.isArray(data.fields)) {
+                    throw new Error('קובץ JSON לא תקין - חסר מערך fields');
+                }
+                
+                if (data.fields.length === 0) {
+                    throw new Error('קובץ JSON לא תקין - מערך השדות ריק');
+                }
+
+                this.fieldsData = data;
+                console.log("Fields data saved:", this.fieldsData);
+                
+                this.initializeFieldValues();
+                this.renderFieldsList();
+                this.renderFieldsOverlay();
+
+                this.updateStatus('json-status', 'JSON נטען בהצלחה', 'success');
+                this.showToast('קובץ מיפוי נטען בהצלחה', 'success');
+                this.checkReadyState();
+
+            } catch (error) {
+                console.error('Error loading JSON:', error);
+                this.updateStatus('json-status', 'שגיאה בטעינת JSON', 'error');
+                
+                let errorMessage = 'שגיאה בטעינת קובץ המיפוי';
+                if (error.message.includes('JSON לא תקין')) {
+                    errorMessage = error.message;
+                }
+                
+                this.showToast(errorMessage, 'error');
+            }
+        }
+
+        async renderPDF() {
+            if (!this.pdfDocument) return;
+
+            const page = await this.pdfDocument.getPage(1);
+            const viewport = page.getViewport({ scale: this.scale });
+
+            const canvas = document.getElementById('pdf-canvas');
+            const context = canvas.getContext('2d');
+
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+
+            await page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise;
+
+            document.getElementById('pdf-container').style.display = 'block';
+            document.getElementById('welcome-message').style.display = 'none';
+        }
+
+        initializeFieldValues() {
+            if (!this.fieldsData) return;
+
+            this.fieldsData.fields.forEach(field => {
+                if (!this.fieldValues.hasOwnProperty(field.id)) {
+                    this.fieldValues[field.id] = field.type === 'checkbox' ? false : '';
+                }
+            });
+        }
+
+        renderFieldsList() {
+            if (!this.fieldsData) return;
+
+            const fieldsList = document.getElementById('fields-list');
+            fieldsList.innerHTML = '';
+
+            this.fieldsData.fields.forEach((field, index) => {
+                const fieldItem = this.createFieldItem(field, index);
+                fieldsList.appendChild(fieldItem);
+            });
+
+            this.updateFieldCounts();
+        }
+
+        createFieldItem(field, index) {
+            const div = document.createElement('div');
+            div.className = `field-item ${this.isFieldFilled(field) ? 'filled' : ''}`;
+            div.dataset.fieldId = field.id;
+
+            const label = document.createElement('div');
+            label.className = 'field-label';
+            label.textContent = field.label_he;
+
+            const details = document.createElement('div');
+            details.className = 'field-details';
+            details.innerHTML = `
+                <span>${field.type}</span>
+                <span>${field.direction.toUpperCase()}</span>
+            `;
+
+            const inputContainer = document.createElement('div');
+            const input = this.createFieldInput(field);
+            inputContainer.appendChild(input);
+
+            const errorMsg = document.createElement('div');
+            errorMsg.className = 'error-message';
+            errorMsg.id = `error-${field.id}`;
+
+            div.appendChild(label);
+            div.appendChild(details);
+            div.appendChild(inputContainer);
+            div.appendChild(errorMsg);
+
+            // Click handler for field item
+            div.addEventListener('click', () => {
+                this.focusField(field.id);
+            });
+
+            return div;
+        }
+
+        createFieldInput(field) {
+            let input;
+
+            if (field.type === 'checkbox') {
+                input = document.createElement('input');
+                input.type = 'checkbox';
+                input.className = 'checkbox-input';
+                input.checked = this.fieldValues[field.id] || false;
+            } else {
+                input = document.createElement('input');
+                input.type = this.getInputType(field.type);
+                input.className = 'field-input';
+                input.value = this.fieldValues[field.id] || '';
+                input.placeholder = this.getPlaceholder(field.type);
+                
+                if (field.direction === 'rtl') {
+                    input.style.direction = 'rtl';
+                    input.style.textAlign = 'right';
+                } else {
+                    input.style.direction = 'ltr';
+                    input.style.textAlign = 'left';
+                }
+            }
+
+            input.addEventListener('input', (e) => {
+                this.handleFieldInput(field.id, e.target.value, field.type);
+            });
+
+            input.addEventListener('change', (e) => {
+                if (field.type === 'checkbox') {
+                    this.handleFieldInput(field.id, e.target.checked, field.type);
+                }
+            });
+
+            return input;
+        }
+
+        getInputType(fieldType) {
+            const typeMap = {
+                'number': 'number',
+                'phone': 'tel',
+                'id_number': 'text',
+                'text': 'text'
+            };
+            return typeMap[fieldType] || 'text';
+        }
+
+        getPlaceholder(fieldType) {
+            const placeholders = {
+                'number': 'הכנס מספר',
+                'phone': '050-1234567',
+                'id_number': '123456789',
+                'text': 'הכנס טקסט'
+            };
+            return placeholders[fieldType] || '';
+        }
+
+        handleFieldInput(fieldId, value, fieldType) {
+            this.fieldValues[fieldId] = value;
+            
+            // Validate field
+            const isValid = this.validateField(fieldId, value, fieldType);
+            this.updateFieldValidation(fieldId, isValid);
+
+            // Update UI
+            this.updateFieldItem(fieldId);
+            this.updateFieldOverlay(fieldId);
+            this.updateFieldCounts();
+            this.saveData();
+        }
+
+        validateField(fieldId, value, fieldType) {
+            const errorElement = document.getElementById(`error-${fieldId}`);
+            let errorMessage = '';
+            let isValid = true;
+
+            switch (fieldType) {
+                case 'id_number':
+                    if (value && !this.validateIsraeliID(value)) {
+                        errorMessage = 'מספר זהות לא תקין';
+                        isValid = false;
+                    }
+                    break;
+                
+                case 'phone':
+                    if (value && !this.validateIsraeliPhone(value)) {
+                        errorMessage = 'מספר טלפון לא תקין (05X-XXXXXXX)';
+                        isValid = false;
+                    }
+                    break;
+            }
+
+            if (errorElement) {
+                errorElement.textContent = errorMessage;
+                errorElement.classList.toggle('show', !isValid);
+            }
+
+            return isValid;
+        }
+
+        validateIsraeliID(id) {
+            // Remove any non-digit characters
+            const cleanId = id.replace(/\D/g, '');
+            
+            if (cleanId.length !== 9) return false;
+            
+            // Calculate check digit
+            let sum = 0;
+            for (let i = 0; i < 9; i++) {
+                let digit = parseInt(cleanId[i]);
+                if (i % 2 === 1) {
+                    digit *= 2;
+                    if (digit > 9) {
+                        digit = Math.floor(digit / 10) + (digit % 10);
+                    }
+                }
+                sum += digit;
+            }
+            
+            return sum % 10 === 0;
+        }
+
+        validateIsraeliPhone(phone) {
+            // Israeli mobile phone format: 05X-XXXXXXX or 05XXXXXXXXX
+            const phoneRegex = /^05[0-9]-?[0-9]{7}$/;
+            return phoneRegex.test(phone.replace(/\s/g, ''));
+        }
+
+        updateFieldValidation(fieldId, isValid) {
+            const input = document.querySelector(`[data-field-id="${fieldId}"] .field-input`);
+            if (input) {
+                input.classList.toggle('error', !isValid);
+            }
+        }
+
+        updateFieldItem(fieldId) {
+            const fieldItem = document.querySelector(`[data-field-id="${fieldId}"]`);
+            if (fieldItem) {
+                const isFilled = this.isFieldFilled(this.fieldsData.fields.find(f => f.id === fieldId));
+                fieldItem.classList.toggle('filled', isFilled);
+            }
+        }
+
+        updateFieldOverlay(fieldId) {
+            const overlay = document.querySelector(`[data-field-id="${fieldId}"].field-overlay`);
+            if (overlay) {
+                const field = this.fieldsData.fields.find(f => f.id === fieldId);
+                const isFilled = this.isFieldFilled(field);
+                overlay.classList.toggle('filled', isFilled);
+                
+                const textElement = overlay.querySelector('.field-text');
+                if (textElement) {
+                    textElement.textContent = this.getDisplayValue(field);
+                }
+            }
+        }
+
+        renderFieldsOverlay() {
+            if (!this.fieldsData || !this.pdfDocument) return;
+
+            const overlay = document.getElementById('fields-overlay');
+            overlay.innerHTML = '';
+
+            const canvas = document.getElementById('pdf-canvas');
+            const canvasRect = canvas.getBoundingClientRect();
+
+            this.fieldsData.fields.forEach(field => {
+                const fieldOverlay = this.createFieldOverlay(field, canvas);
+                overlay.appendChild(fieldOverlay);
+            });
+        }
+
+        createFieldOverlay(field, canvas) {
+            const div = document.createElement('div');
+            div.className = `field-overlay ${this.isFieldFilled(field) ? 'filled' : ''}`;
+            div.dataset.fieldId = field.id;
+
+            // Calculate position based on percentage
+            const x = (field.xPct / 100) * canvas.width;
+            const y = (field.yPct / 100) * canvas.height;
+            const width = (field.wPct / 100) * canvas.width;
+            const height = (field.hPct / 100) * canvas.height;
+
+            div.style.left = x + 'px';
+            div.style.top = y + 'px';
+            div.style.width = width + 'px';
+            div.style.height = height + 'px';
+
+            // Text display
+            const textDiv = document.createElement('div');
+            textDiv.className = `field-text ${field.direction}`;
+            textDiv.textContent = this.getDisplayValue(field);
+            textDiv.style.fontSize = `${field.fontSize * this.scale / 72}px`;
+            if (field.letterSpacing) {
+                textDiv.style.letterSpacing = `${field.letterSpacing}px`;
+            }
+
+            div.appendChild(textDiv);
+
+            // Click handler
+            div.addEventListener('click', () => {
+                this.focusField(field.id);
+            });
+
+            return div;
+        }
+
+        focusField(fieldId) {
+            // Remove previous active states
+            document.querySelectorAll('.field-item.active, .field-overlay.active').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // Add active state
+            const fieldItem = document.querySelector(`[data-field-id="${fieldId}"].field-item`);
+            const fieldOverlay = document.querySelector(`[data-field-id="${fieldId}"].field-overlay`);
+            const input = fieldItem?.querySelector('.field-input, .checkbox-input');
+
+            if (fieldItem) fieldItem.classList.add('active');
+            if (fieldOverlay) fieldOverlay.classList.add('active');
+            if (input) input.focus();
+
+            this.activeField = fieldId;
+
+            // Scroll to field item on mobile
+            if (window.innerWidth <= 768 && fieldItem) {
+                fieldItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        getDisplayValue(field) {
+            const value = this.fieldValues[field.id];
+            
+            if (field.type === 'checkbox') {
+                return value ? '✓' : '';
+            }
+            
+            return value || '';
+        }
+
+        isFieldFilled(field) {
+            const value = this.fieldValues[field.id];
+            
+            if (field.type === 'checkbox') {
+                return value === true;
+            }
+            
+            return value && value.toString().trim() !== '';
+        }
+
+        updateFieldCounts() {
+            if (!this.fieldsData) return;
+
+            const totalCount = this.fieldsData.fields.length;
+            const filledCount = this.fieldsData.fields.filter(field => this.isFieldFilled(field)).length;
+
+            document.getElementById('total-count').textContent = totalCount;
+            document.getElementById('filled-count').textContent = filledCount;
+        }
+
+        checkReadyState() {
+            console.log("Checking ready state:");
+            console.log("PDF Document:", !!this.pdfDocument);
+            console.log("PDF ArrayBuffer:", !!this.pdfArrayBuffer);
+            console.log("Fields Data:", !!this.fieldsData);
+            console.log("Fields Array:", this.fieldsData ? Array.isArray(this.fieldsData.fields) : false);
+            console.log("Fields Count:", this.fieldsData && this.fieldsData.fields ? this.fieldsData.fields.length : 0);
+
+            const isReady = this.pdfDocument && 
+                           this.pdfArrayBuffer && 
+                           this.fieldsData && 
+                           Array.isArray(this.fieldsData.fields) && 
+                           this.fieldsData.fields.length > 0;
+            
+            console.log("Is Ready:", isReady);
+            
+            const exportBtn = document.getElementById('export-btn');
+            exportBtn.classList.toggle('enabled', isReady);
+            
+            if (isReady) {
+                this.renderFieldsOverlay();
+                this.showToast('מוכן לייצוא! ניתן למלא שדות ולייצא PDF', 'success');
+            }
+        }
+
+        async exportFilledPDF() {
+            if (!this.pdfDocument || !this.fieldsData || !this.pdfArrayBuffer) {
+                this.showToast('יש לטעון קודם PDF ו-JSON', 'error');
+                return;
+            }
+
+            try {
+                this.showToast('מכין PDF ממולא...', 'info');
+
+                // Load PDF with pdf-lib
+                const pdfDoc = await PDFLib.PDFDocument.load(this.pdfArrayBuffer);
+                const pages = pdfDoc.getPages();
+                const firstPage = pages[0];
+                const { width, height } = firstPage.getSize();
+
+                // Embed David Libre font
+                let font;
+                try {
+                    const fontUrl = 'https://fonts.gstatic.com/s/davidlibre/v14/snfus0W_99N64iuYSvp4W_l86p6TYS-Y.woff2';
+                    const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
+                    font = await pdfDoc.embedFont(fontBytes);
+                } catch (fontError) {
+                    console.warn('Could not load David Libre, using Helvetica:', fontError);
+                    font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+                }
+
+                // Add field values to PDF
+                this.fieldsData.fields.forEach(field => {
+                    const value = this.fieldValues[field.id];
+                    if (!value && value !== true) return;
+
+                    const x = (field.xPct / 100) * width;
+                    const y = height - ((field.yPct / 100) * height) - ((field.hPct / 100) * height);
+                    const fontSize = field.fontSize || 12;
+
+                    let displayValue = value;
+                    if (field.type === 'checkbox') {
+                        displayValue = value ? '✓' : '';
+                    }
+
+                    if (displayValue) {
+                        firstPage.drawText(displayValue.toString(), {
+                            x: x + 4,
+                            y: y + 4,
+                            size: fontSize,
+                            font: font,
+                            color: PDFLib.rgb(0, 0, 0)
+                        });
+                    }
+                });
+
+                // Save and download
+                const pdfBytes = await pdfDoc.save();
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `filled-form-${Date.now()}.pdf`;
+                a.click();
+
+                URL.revokeObjectURL(url);
+                this.showToast('PDF ממולא נוצר בהצלחה!', 'success');
+
+            } catch (error) {
+                console.error('Export error:', error);
+                this.showToast('שגיאה ביצירת PDF ממולא', 'error');
+            }
+        }
+
+        saveData() {
+            const data = {
+                fieldValues: this.fieldValues,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('pdfFillerData', JSON.stringify(data));
+        }
+
+        loadSavedData() {
+            try {
+                const saved = localStorage.getItem('pdfFillerData');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    this.fieldValues = data.fieldValues || {};
+                }
+            } catch (error) {
+                console.error('Error loading saved data:', error);
+            }
+        }
+
+        updateStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = message;
+                element.className = `file-status ${type}`;
+            }
+        }
+
+        showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        showToast(message, type) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icons = {
+                success: '✅',
+                error: '❌',
+                info: 'ℹ️'
+            };
+
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type]}</div>
+                <div class="toast-message">${message}</div>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    }
+
+    // Initialize the application
+    document.addEventListener('DOMContentLoaded', () => {
+        const app = new PDFFillerTool();
+        window.pdfFiller = app;
+    });
+</script>
+```
+
+</body>
+</html>
