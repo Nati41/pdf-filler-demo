@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Filler Pro - כלי מילוי PDF מתקדם</title>
+
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=David+Libre:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* CSS STYLES REMOVED FOR BREVITY IN THIS SNIPPET */
+    </style>
+</head>
+<body>
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>📋 PDF Filler Pro</h1>
+        <div class="file-controls">
+            <div class="file-input-group">
+                <label for="pdf-input" class="file-input-label">📄 העלה PDF</label>
+                <input type="file" id="pdf-input" class="file-input" accept=".pdf">
+                <div id="pdf-status" class="file-status">נא להעלות קובץ PDF</div>
+            </div>
+            <div class="file-input-group">
+                <label for="json-input" class="file-input-label">🗂️ העלה JSON</label>
+                <input type="file" id="json-input" class="file-input" accept=".json">
+                <div id="json-status" class="file-status">נא להעלות קובץ מיפוי</div>
+            </div>
+            <button id="export-btn" class="export-btn">💾 צור PDF ממולא</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="pdf-viewer">
+            <div id="welcome-message" class="welcome-message">
+                <div class="welcome-icon">📄</div>
+                <div class="welcome-text">כלי מילוי PDF מתקדם</div>
+                <div class="welcome-subtext">העלה קובץ PDF וקובץ מיפוי JSON כדי להתחיל</div>
+            </div>
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <div>טוען קובץ PDF...</div>
+            </div>
+            <div id="pdf-container" class="pdf-container">
+                <canvas id="pdf-canvas" class="pdf-canvas"></canvas>
+                <div id="fields-overlay" class="fields-overlay"></div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>שדות למילוי</h2>
+                <div class="sidebar-info">
+                    <span id="filled-count">0</span> מתוך <span id="total-count">0</span> שדות ממולאים
+                </div>
+            </div>
+            <div id="fields-list" class="fields-list">
+                <div class="welcome-message">
+                    <div class="welcome-icon">✏️</div>
+                    <div class="welcome-text">השדות יופיעו כאן</div>
+                    <div class="welcome-subtext">לאחר טעינת קבצי PDF ו-JSON</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // JAVASCRIPT REMOVED FOR BREVITY (already included in your provided code)
+    </script>
+</body>
+</html>
